@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程費用計算機</title>
+    <style>
+        :root {
+            --primary-color: #059669;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --alert-color: #d97706;
+            --alert-bg: #fffbeb;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .rule-badge {
+            background-color: #e6f4ea;
+            color: #137333;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+        }
+        .upsell-alert {
+            display: none;
+            background-color: var(--alert-bg);
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+        .result-box {
+            margin-top: 24px;
+            padding: 20px;
+            background-color: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .result-item.highlight {
+            color: var(--alert-color);
+            font-weight: 500;
+        }
+        .result-item.total {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            border-top: 2px dashed #e5e7eb;
+            padding-top: 12px;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 課程費用計算機</h2>
+    <div class="rule-badge">💰 計費規則：單堂 1,000 元 / 8 堂套裝 3,200 元</div>
+    
+    <div class="form-group">
+        <label for="courseCount">預計購買堂數</label>
+        <input type="number" id="courseCount" value="8" min="0" oninput="calculate()">
+    </div>
+
+    <!-- 智慧推銷提示區塊 -->
+    <div class="upsell-alert" id="upsellAlert"></div>
+
+    <div class="result-box">
+        <div class="result-item">
+            <span>計算明細：</span>
+            <span id="resDetail">8 堂</span>
+        </div>
+        <div class="result-item highlight" id="savingBox">
+            <span>為您節省：</span>
+            <span id="resSavings">TWD 0</span>
+        </div>
+        <div class="result-item total">
+            <span>應付總金額：</span>
+            <span id="resTotal">TWD 0</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        const count = parseInt(document.getElementById('courseCount').value) || 0;
+        
+        // 根據使用者的新規格設定數值
+        const SINGLE_PRICE = 1000;
+        const PACKAGE_COUNT = 8;
+        const PACKAGE_PRICE = 3200;
+
+        // 1. 核心計費邏輯 (8堂用套裝，其餘算單堂1000)
+        const packages = Math.floor(count / PACKAGE_COUNT);
+        const remainder = count % PACKAGE_COUNT;
+        const finalTotal = (packages * PACKAGE_PRICE) + (remainder * SINGLE_PRICE);
+        
+        // 2. 計算常規省下的金額 (對比純單堂原價)
+        const originalTotal = count * SINGLE_PRICE;
+        const savings = originalTotal - finalTotal;
+
+        // 3. 智慧行銷提示邏輯：檢查「多買到下一個8堂滿額」是否更便宜
+        const nextTargetCount = (packages + 1) * PACKAGE_COUNT;
+        const nextTargetPrice = (packages + 1) * PACKAGE_PRICE;
+        const upsellAlertEl = document.getElementById('upsellAlert');
+
+        if (nextTargetPrice < finalTotal && count > 0) {
+            const gapCount = nextTargetCount - count;
+            const diffPrice = finalTotal - nextTargetPrice;
+            upsellAlertEl.style.display = 'block';
+            upsellAlertEl.innerHTML = `💡 <b>聰明消費提示：</b><br>您目前購買 ${count} 堂需 <b>TWD ${finalTotal.toLocaleString()}</b>。<br>推薦直接改買 <b>${nextTargetCount} 堂</b> 套裝，不僅能多上 ${gapCount} 堂課，總價還能<b>再省下 TWD ${diffPrice.toLocaleString()}</b> (只需 TWD ${nextTargetPrice.toLocaleString()})！`;
+        } else {
+            upsellAlertEl.style.display = 'none';
+        }
+
+        // 4. 產生明細文字
+        let detailText = "";
+        if (packages > 0 && remainder > 0) {
+            detailText = `${packages} 套裝(${packages * PACKAGE_COUNT}堂) + 零售 ${remainder} 堂`;
+        } else if (packages > 0) {
+            detailText = `${packages} 組優惠套裝 (${count} 堂)`;
+        } else {
+            detailText = `零售 ${remainder} 堂`;
+        }
+
+        // 5. 渲染結果到畫面
+        document.getElementById('resDetail').innerText = detailText;
+        document.getElementById('resTotal').innerText = `TWD ${finalTotal.toLocaleString()}`;
+        
+        if (savings > 0) {
+            document.getElementById('savingBox').style.display = 'flex';
+            document.getElementById('resSavings').innerText = `TWD ${savings.toLocaleString()}`;
+        } else {
+            document.getElementById('savingBox').style.display = 'none';
+        }
+    }
+
+    // 頁面載入時自動初始化計算
+    calculate();
+</script>
+
+</body>
+</html>
